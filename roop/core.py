@@ -22,6 +22,10 @@ from roop.predictor import predict_image, predict_video
 from roop.processors.frame.core import get_frame_processors_modules
 from roop.utilities import has_image_extension, is_image, is_video, detect_fps, create_video, extract_frames, get_temp_frame_paths, restore_audio, create_temp, move_temp, clean_temp, normalize_output_path
 
+import skvideo.io # https://github.com/scikit-video/scikit-video do not use
+                  # 1.1.1.0 and below since it's not compatible with numpy>=1.24
+                  # Ctrl + F "Installing from github" on skvideo github page
+
 warnings.filterwarnings('ignore', category=FutureWarning, module='insightface')
 warnings.filterwarnings('ignore', category=UserWarning, module='torchvision')
 
@@ -156,17 +160,26 @@ def start() -> None:
     # extract frames
     if roop.globals.keep_fps:
         fps = detect_fps(roop.globals.target_path)
-        update_status(f'Extracting frames with {fps} FPS...')
-        extract_frames(roop.globals.target_path, fps)
+        #update_status(f'Extracting frames with {fps} FPS...')
+        #extract_frames(roop.globals.target_path, fps)
     else:
-        update_status('Extracting frames with 30 FPS...')
-        extract_frames(roop.globals.target_path)
+        #update_status('Extracting frames with 30 FPS...')
+        #extract_frames(roop.globals.target_path)
+        fps = 30
+
+    inputparameters = {}
+    outputparameters = {'-r': f'{fps}', "-pix_fmt":"bgr24"}
+    reader = skvideo.io.FFmpegReader(roop.globals.target_path,
+                    inputdict=inputparameters,
+                    outputdict=outputparameters)
+    frame_generator = list(reader.nextFrame())[:3]
+
     # process frame
-    temp_frame_paths = get_temp_frame_paths(roop.globals.target_path)
-    if temp_frame_paths:
+    #temp_frame_paths = get_temp_frame_paths(roop.globals.target_path)
+    if frame_generator:
         for frame_processor in get_frame_processors_modules(roop.globals.frame_processors):
             update_status('Progressing...', frame_processor.NAME)
-            frame_processor.process_video(roop.globals.source_path, temp_frame_paths)
+            frame_processor.process_video(roop.globals.source_path, frame_generator)
             frame_processor.post_process()
     else:
         update_status('Frames not found...')

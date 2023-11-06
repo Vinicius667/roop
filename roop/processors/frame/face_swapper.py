@@ -2,6 +2,7 @@ from typing import Any, List, Callable
 import cv2
 import insightface
 import threading
+import os
 
 import roop.globals
 import roop.processors.frame.core
@@ -76,8 +77,8 @@ def process_frame(source_face: Face, reference_face: Face, temp_frame: Frame) ->
 def process_frames(source_path: str, temp_frame_paths: List[str], update: Callable[[], None]) -> None:
     source_face = get_one_face(cv2.imread(source_path))
     reference_face = None if roop.globals.many_faces else get_face_reference()
-    for temp_frame_path in temp_frame_paths:
-        temp_frame = cv2.imread(temp_frame_path)
+    for n, temp_frame in enumerate(temp_frame_paths):
+        temp_frame_path = os.path.join(roop.globals.temp_directory_path, f'{n:04}.png')
         result = process_frame(source_face, reference_face, temp_frame)
         cv2.imwrite(temp_frame_path, result)
         if update:

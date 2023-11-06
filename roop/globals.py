@@ -13,6 +13,7 @@ reference_face_position: Optional[int] = None
 reference_frame_number: Optional[int] = None
 similar_face_distance: Optional[float] = None
 temp_frame_format: Optional[str] = None
+temp_directory_path: Optional[str] = None
 temp_frame_quality: Optional[int] = None
 output_video_encoder: Optional[str] = None
 output_video_quality: Optional[int] = None
